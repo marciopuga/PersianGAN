@@ -6,9 +6,6 @@ import runway
 
 fmt = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
 
-np.random.seed(0)
-tf.random.set_random_seed(0)
-
 @runway.setup(options={'checkpoint': runway.file(extension='.pkl')})
 def setup(opts):
     global Gs

@@ -1,7 +1,7 @@
-datasets
 __pycache__
-docs
+checkpoints/*
+datasets
 ffhq-dataset
-ordered_output
 results
+ordered_output
 .stylegan2-cache
