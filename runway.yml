@@ -4,6 +4,7 @@ cuda: 10.0
 spec:
   gpu: True
   cpu: False
+framework: tensorflow
 files:
   ignore:
     - checkpoints/*
