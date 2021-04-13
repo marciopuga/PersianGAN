@@ -43,6 +43,7 @@ import numpy as np
 import tensorflow as tf
 import dnnlib.tflib as tflib
 import runway
+import PIL
 
 import re
 
@@ -67,7 +68,7 @@ from example_model import ExampleModel
 def setup(opts):
     global Gs
     tflib.init_tf()
-    with open(opts['checkpoint'], 'rb') as file:
+    with open('model.pkl', 'rb') as file:
         G, D, Gs = pickle.load(file)
     return Gs
 
@@ -106,4 +107,3 @@ if __name__ == '__main__':
     # run the model server using the default network interface and ports,
     # displayed here for convenience
     runway.run(host='0.0.0.0', port=8000)
-
