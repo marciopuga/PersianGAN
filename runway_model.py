@@ -37,7 +37,7 @@
 # Import the Runway SDK. Please install it first with
 # `pip install runway-python`.
 import runway
-from runway.data_types import number, text, image
+from runway.data_types import number, text, image, vector
 import pickle
 import numpy as np
 import tensorflow as tf
@@ -50,6 +50,7 @@ import dnnlib
 import dnnlib.tflib as tflib
 
 
+fmt = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
 np.random.seed(0)
 tf.random.set_random_seed(0)
 
@@ -72,15 +73,15 @@ def setup(opts):
     return Gs
 
 generate_inputs = {
-    'truncation': number(min=1, max=10, step=1, default=5, description='Example input.'),
-    'z': number(min=0, max=1000000, description='A seed used to initialize the model.')
+    'z': runway.vector(512, sampling_std=0.5),
+    'truncation': runway.number(min=0, max=1, default=0.8, step=0.01)
 }
-
 
 @runway.command('generate', inputs=generate_inputs, outputs={'image': runway.image})
 def convert(model, inputs):
-    seed = inputs['z']
+    z = inputs['z']
     truncation = inputs['truncation']
+    latents = z.reshape((1, 512))
 
     Gs_kwargs = {
         'output_transform': dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True),
@@ -92,10 +93,7 @@ def convert(model, inputs):
     noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
     label = np.zeros([1] + Gs.input_shapes[1][1:])
 
-    rnd = np.random.RandomState(seed)
-    z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
-    tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
-    image = Gs.run(z, label, **Gs_kwargs) # [minibatch, height, width, channel]
+    image = model.run(latents, None, truncation_psi=truncation, randomize_noise=False, output_transform=fmt)
     output = PIL.Image.fromarray(image[0], 'RGB')
 
     print(output)
@@ -106,4 +104,3 @@ if __name__ == '__main__':
     # run the model server using the default network interface and ports,
     # displayed here for convenience
     runway.run(host='0.0.0.0', port=8000)
-
