@@ -44,6 +44,11 @@ import tensorflow as tf
 import dnnlib.tflib as tflib
 import runway
 
+import re
+
+import dnnlib
+import dnnlib.tflib as tflib
+
 
 np.random.seed(0)
 tf.random.set_random_seed(0)
@@ -74,13 +79,26 @@ generate_inputs = {
 
 @runway.command('generate', inputs=generate_inputs, outputs={'image': runway.image})
 def convert(model, inputs):
-    z = inputs['z']
+    seed = inputs['z']
     truncation = inputs['truncation']
-    latents = z.reshape((1, 512))
-    images = model.run(latents, None, truncation_psi=truncation, randomize_noise=False, output_transform=fmt)
+    Gs_kwargs = {
+        'output_transform': dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True),
+        'randomize_noise': False
+    }
+
+    if truncation is not None:
+        Gs_kwargs['truncation_psi'] = truncation
+
+    noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
+    label = np.zeros([1] + Gs.input_shapes[1][1:])
+
+    rnd = np.random.RandomState(seed)
+    z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
+    tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
+    image = Gs.run(z, label, **Gs_kwargs) # [minibatch, height, width, channel]
+
     output = np.clip(images[0], 0, 255).astype(np.uint8)
     return {'image': output}
-
 
 
 if __name__ == '__main__':
