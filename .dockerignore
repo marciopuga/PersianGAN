@@ -1,10 +1,10 @@
-dataset
+datasets
 __pycache__
 docs
 ffhq-dataset
 ordered_output
 results
 .stylegan2-cache
-new_output
+metrics
 out
-*.pkl
+results

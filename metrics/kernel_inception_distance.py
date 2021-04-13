@@ -6,13 +6,12 @@
 # distribution of this software and related documentation without an express
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 
-"""Frechet Inception Distance (FID) from the paper
-"GANs trained by a two time-scale update rule converge to a local Nash equilibrium"."""
+"""Kernel Inception Distance (KID) from the paper
+"Demystifying MMD GANs"."""
 
 import os
 import pickle
 import numpy as np
-import scipy
 import tensorflow as tf
 import dnnlib
 import dnnlib.tflib as tflib
@@ -21,7 +20,21 @@ from metrics import metric_base
 
 #----------------------------------------------------------------------------
 
-class FID(metric_base.MetricBase):
+def compute_kid(feat_real, feat_fake, num_subsets=100, max_subset_size=1000):
+    n = feat_real.shape[1]
+    m = min(min(feat_real.shape[0], feat_fake.shape[0]), max_subset_size)
+    t = 0
+    for _subset_idx in range(num_subsets):
+        x = feat_fake[np.random.choice(feat_fake.shape[0], m, replace=False)]
+        y = feat_real[np.random.choice(feat_real.shape[0], m, replace=False)]
+        a = (x @ x.T / n + 1) ** 3 + (y @ y.T / n + 1) ** 3
+        b = (x @ y.T / n + 1) ** 3
+        t += (a.sum() - np.diag(a).sum()) / (m - 1) - b.sum() * 2 / m
+    return t / num_subsets / m
+
+#----------------------------------------------------------------------------
+
+class KID(metric_base.MetricBase):
     def __init__(self, max_reals, num_fakes, minibatch_per_gpu, use_cached_real_stats=True, **kwargs):
         super().__init__(**kwargs)
         self.max_reals = max_reals
@@ -39,28 +52,20 @@ class FID(metric_base.MetricBase):
         os.makedirs(os.path.dirname(cache_file), exist_ok=True)
         if self.use_cached_real_stats and os.path.isfile(cache_file):
             with open(cache_file, 'rb') as f:
-                mu_real, sigma_real = pickle.load(f)
+                feat_real = pickle.load(f)
         else:
-            nfeat = feature_net.output_shape[1]
-            mu_real = np.zeros(nfeat)
-            sigma_real = np.zeros([nfeat, nfeat])
-            num_real = 0
+            feat_real = []
             for images, _labels, num in self._iterate_reals(minibatch_size):
                 if self.max_reals is not None:
-                    num = min(num, self.max_reals - num_real)
+                    num = min(num, self.max_reals - len(feat_real))
                 if images.shape[1] == 1:
                     images = np.tile(images, [1, 3, 1, 1])
-                for feat in list(feature_net.run(images, num_gpus=num_gpus, assume_frozen=True))[:num]:
-                    mu_real += feat
-                    sigma_real += np.outer(feat, feat)
-                    num_real += 1
-                if self.max_reals is not None and num_real >= self.max_reals:
+                feat_real += list(feature_net.run(images, num_gpus=num_gpus, assume_frozen=True))[:num]
+                if self.max_reals is not None and len(feat_real) >= self.max_reals:
                     break
-            mu_real /= num_real
-            sigma_real /= num_real
-            sigma_real -= np.outer(mu_real, mu_real)
+            feat_real = np.stack(feat_real)
             with open(cache_file, 'wb') as f:
-                pickle.dump((mu_real, sigma_real), f)
+                pickle.dump(feat_real, f)
 
         # Construct TensorFlow graph.
         result_expr = []
@@ -81,13 +86,9 @@ class FID(metric_base.MetricBase):
             self._report_progress(begin, self.num_fakes)
             feat_fake += list(np.concatenate(tflib.run(result_expr), axis=0))
         feat_fake = np.stack(feat_fake[:self.num_fakes])
-        mu_fake = np.mean(feat_fake, axis=0)
-        sigma_fake = np.cov(feat_fake, rowvar=False)
 
-        # Calculate FID.
-        m = np.square(mu_fake - mu_real).sum()
-        s, _ = scipy.linalg.sqrtm(np.dot(sigma_fake, sigma_real), disp=False) # pylint: disable=no-member
-        dist = m + np.trace(sigma_fake + sigma_real - 2*s)
-        self._report_result(np.real(dist))
+        # Calculate KID.
+        kid = compute_kid(feat_real, feat_fake)
+        self._report_result(np.real(kid), fmt='%-12.8f')
 
 #----------------------------------------------------------------------------
