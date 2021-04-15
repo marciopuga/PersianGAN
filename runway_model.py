@@ -90,13 +90,9 @@ def convert(model, inputs):
     if truncation is not None:
         Gs_kwargs['truncation_psi'] = truncation
 
-    noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
-    label = np.zeros([1] + Gs.input_shapes[1][1:])
-
     image = model.run(latents, None, truncation_psi=truncation, randomize_noise=False, output_transform=fmt)
     output = PIL.Image.fromarray(image[0], 'RGB')
 
-    print(output)
     return {'image': output}
 
 
