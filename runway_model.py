@@ -89,10 +89,6 @@ def convert(model, inputs):
     output = np.clip(images[0], 0, 255).astype(np.uint8)
     return {'image': output}
 
-    # output = PIL.Image.fromarray(image[0], 'RGB')
-
-    # return {'image': output}
-
 
 if __name__ == '__main__':
     # run the model server using the default network interface and ports,
