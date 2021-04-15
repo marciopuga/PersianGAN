@@ -70,6 +70,9 @@ def setup(opts):
     tflib.init_tf()
     with open(opts['checkpoint'], 'rb') as file:
         G, D, Gs = pickle.load(file)
+    # with open('model.pkl', 'rb') as file:
+    #     G, D, Gs = pickle.load(file)
+
     return Gs
 
 generate_inputs = {
@@ -82,18 +85,13 @@ def convert(model, inputs):
     z = inputs['z']
     truncation = inputs['truncation']
     latents = z.reshape((1, 512))
-
-    Gs_kwargs = {
-        'output_transform': dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True),
-        'randomize_noise': False
-    }
-    if truncation is not None:
-        Gs_kwargs['truncation_psi'] = truncation
-
-    image = model.run(latents, None, truncation_psi=truncation, randomize_noise=False, output_transform=fmt)
-    output = PIL.Image.fromarray(image[0], 'RGB')
-
+    images = model.run(latents, None, truncation_psi=truncation, randomize_noise=False, output_transform=fmt)
+    output = np.clip(images[0], 0, 255).astype(np.uint8)
     return {'image': output}
+
+    # output = PIL.Image.fromarray(image[0], 'RGB')
+
+    # return {'image': output}
 
 
 if __name__ == '__main__':

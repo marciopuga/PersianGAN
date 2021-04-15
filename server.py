@@ -84,18 +84,9 @@ def convert(model, inputs):
     truncation = inputs['truncation']
     latents = z.reshape((1, 512))
 
-    Gs_kwargs = {
-        'output_transform': dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True),
-        'randomize_noise': False
-    }
-    if truncation is not None:
-        Gs_kwargs['truncation_psi'] = truncation
-
-
     image = model.run(latents, None, truncation_psi=truncation, randomize_noise=False, output_transform=fmt)
     output = PIL.Image.fromarray(image[0], 'RGB')
 
-    print(output)
     return {'image': output}
 
 
