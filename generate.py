@@ -52,7 +52,7 @@ def generate_images(network_pkl, seeds, truncation_psi, outdir, class_idx, dlate
     noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
     label = np.zeros([1] + Gs.input_shapes[1][1:])
     if class_idx is not None:
-        label[:, class_idx] = 1
+        label[:, 1] = 1
 
     for seed_idx, seed in enumerate(seeds):
         print('Generating image for seed %d (%d/%d) ...' % (seed, seed_idx, len(seeds)))

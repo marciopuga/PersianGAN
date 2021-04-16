@@ -50,12 +50,9 @@ import dnnlib
 import dnnlib.tflib as tflib
 
 
-fmt = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
 np.random.seed(0)
 tf.random.set_random_seed(0)
 
-
-from example_model import ExampleModel
 
 # Setup the model, initialize weights, set the configs of the model, etc.
 # Every model will have a different set of configurations and requirements.
@@ -70,6 +67,8 @@ def setup(opts):
     tflib.init_tf()
     with open(opts['checkpoint'], 'rb') as file:
         G, D, Gs = pickle.load(file)
+
+    # Turn this on to develop locally
     # with open('model.pkl', 'rb') as file:
     #     G, D, Gs = pickle.load(file)
 
@@ -85,7 +84,9 @@ def convert(model, inputs):
     z = inputs['z']
     truncation = inputs['truncation']
     latents = z.reshape((1, 512))
-    images = model.run(latents, None, truncation_psi=truncation, randomize_noise=False, output_transform=fmt)
+    label = np.zeros([1] + Gs.input_shapes[1][1:])
+    fmt = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
+    images = model.run(latents, label, truncation_psi=truncation, randomize_noise=False, output_transform=fmt)
     output = np.clip(images[0], 0, 255).astype(np.uint8)
     return {'image': output}
 
