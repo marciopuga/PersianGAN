@@ -1,6 +1,6 @@
 ## Persian carpets trained on stylegan2-ada
 
-[Open in RunwayML](https://app.runwayml.com/models/marciopuga/PersianGAN)
+### This model only works in development mode inside RunwayML
 
 ![](https://runway-model-images.s3.amazonaws.com/50b266ae-0b32-423e-b5cd-c28cb226c3c4.jpeg)
 
@@ -13,3 +13,5 @@
 ![](https://runway-model-images.s3.amazonaws.com/eb375af7-cc6d-4baf-9536-dace69d4b9cb.jpeg)
 
 ![](https://runway-model-images.s3.amazonaws.com/9e8886e9-0e83-4253-beb4-917db30e71a1.jpeg)
+
+

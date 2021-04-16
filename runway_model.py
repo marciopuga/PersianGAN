@@ -65,18 +65,18 @@ tf.random.set_random_seed(0)
 def setup(opts):
     global Gs
     tflib.init_tf()
-    with open(opts['checkpoint'], 'rb') as file:
-        G, D, Gs = pickle.load(file)
+    # with open(opts['checkpoint'], 'rb') as file:
+    #     G, D, Gs = pickle.load(file)
 
     # Turn this on to develop locally
-    # with open('model.pkl', 'rb') as file:
-    #     G, D, Gs = pickle.load(file)
+    with open('model.pkl', 'rb') as file:
+        G, D, Gs = pickle.load(file)
 
     return Gs
 
 generate_inputs = {
     'z': runway.vector(512, sampling_std=0.5),
-    'truncation': runway.number(min=0, max=1, default=0.8, step=0.01)
+    'truncation': runway.number(min=0, max=3, default=0.8, step=0.01)
 }
 
 @runway.command('generate', inputs=generate_inputs, outputs={'image': runway.image})
