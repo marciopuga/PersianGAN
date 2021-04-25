@@ -1,6 +1,9 @@
 ## Persian carpets trained on stylegan2-ada
 
-[Demo](https://youtu.be/7Tp8Kn_JHvI)
+
+### Video
+[![Video](https://img.youtube.com/vi/7Tp8Kn_JHvI/0.jpg)](https://youtu.be/7Tp8Kn_JHvI)
+
 
 ### This model only works in development mode inside RunwayML
 
